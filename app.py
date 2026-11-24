@@ -1,8 +1,8 @@
-"""
-Predictive Healthcare & Disease Risk Prediction System
-Flask web application  |  Group 15, SRECM Mirzapur
-Run:  python app.py      ->  http://127.0.0.1:5000
-"""
+# git commit -m "first commit""""
+# Predictive Healthcare & Disease Risk Prediction System
+# Flask web application  |  Group 15, SRECM Mirzapur
+# Run:  python app.py      ->  http://127.0.0.1:5000
+# """
 import io
 import json
 import os
