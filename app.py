@@ -1,4 +1,3 @@
-# git commit -m "first commit""""
 # Predictive Healthcare & Disease Risk Prediction System
 # Flask web application  |  Group 15, SRECM Mirzapur
 # Run:  python app.py      ->  http://127.0.0.1:5000
@@ -27,10 +26,13 @@ UPLOAD_DIR = os.path.join(BASE, "uploads")
 ALLOWED = {".pdf", ".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".webp"}
 
 app = Flask(__name__)
+PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "https://predict-care-topaz.vercel.app").rstrip("/")
+app.jinja_env.globals["PUBLIC_BASE_URL"] = PUBLIC_BASE_URL
 app.config.update(
     SECRET_KEY=os.environ.get("SECRET_KEY") or "dev-secret-change-me-" + "healthcare-g15",
     MAX_CONTENT_LENGTH=10 * 1024 * 1024,
     SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SECURE=bool(os.environ.get("VERCEL")),
     SESSION_COOKIE_SAMESITE="Lax",
 )
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -510,4 +512,4 @@ def e500(_e):
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=os.environ.get("FLASK_DEBUG") == "1")
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "5000")), debug=os.environ.get("FLASK_DEBUG") == "1")
