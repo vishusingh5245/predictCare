@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Review extracted values{% endblock %}
+{% block content %}
+<div class="page"><div class="container" style="max-width:1020px">
+  <div class="page-head"><div><a href="{{ url_for('assess') }}" class="muted">← Upload another</a>
+    <h1>Review scanned values</h1>
+    <p>We found <b>{{ present|length }}</b> parameters in <b>{{ rep['original_name'] }}</b> via {{ rep['scan_method'] }}. Green fields were auto-filled — please verify them.</p></div></div>
+
+  {% for n in notes %}<div class="note">ℹ️ {{ n }}</div>{% endfor %}
+  {% if not present %}<div class="note" style="background:#fef2f2;border-color:#fecaca;color:#991b1b">No known parameters were detected. Please enter values manually below or upload a clearer report.</div>{% endif %}
+
+  <form method="post" class="card" data-loader="Running ML models…">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    {% for gname, items in groups %}
+      <div class="form-group"><h3>{{ gname }}</h3>
+        <div class="fgrid">{% for key, m in items %}{{ field(key, extracted.get(key), key in extracted) }}{% endfor %}</div>
+      </div>
+    {% endfor %}
+
+    <div class="form-group"><h3>Diseases to analyse</h3>
+      <div class="checks">
+        {% for k, d in DISEASES.items() %}
+          <label class="chk"><input type="checkbox" name="run_{{ k }}" value="1" checked> {{ d.icon }} {{ d.name }}
+            <span class="muted" style="font-weight:500;font-size:.8rem">({{ ready[k] }}/{{ d.features|length }} values found)</span></label>
+        {% endfor %}
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:22px">
+      <button class="btn btn-primary btn-lg">Analyse risk →</button>
+    </div>
+  </form>
+
+  <div class="card" style="margin-top:24px">
+    <details><summary>Show raw text read from the report</summary>
+      <div class="ocr-box" style="margin-top:14px">{{ rep['ocr_text'] }}</div></details>
+  </div>
+</div></div>
+{% endblock %}

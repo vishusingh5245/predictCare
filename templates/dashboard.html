@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}Dashboard{% endblock %}
+{% block head %}<script src="{{ chartjs_src }}"></script>{% endblock %}
+{% block content %}
+<div class="page"><div class="container">
+  <div class="page-head">
+    <div><h1>Hello, {{ g.user['full_name'].split()[0] }} 👋</h1><p>Here is an overview of your health-risk assessments.</p></div>
+    <a class="btn btn-primary" href="{{ url_for('assess') }}">＋ New assessment</a>
+  </div>
+
+  <div class="grid g4" style="margin-bottom:24px">
+    <div class="card stat"><span class="ico" style="background:#ccfbf1">🧾</span><div><b>{{ total }}</b><span>Assessments</span></div></div>
+    <div class="card stat"><span class="ico" style="background:#e0e7ff">📄</span><div><b>{{ n_reports }}</b><span>Reports scanned</span></div></div>
+    <div class="card stat"><span class="ico" style="background:#fee2e2">⚠️</span><div><b>{{ high }}</b><span>High-risk (latest)</span></div></div>
+    <div class="card stat"><span class="ico" style="background:#fef3c7">🩺</span><div><b>{{ latest|length }}/3</b><span>Diseases checked</span></div></div>
+  </div>
+
+  <div class="grid g3" style="margin-bottom:24px">
+    {% for k, d in DISEASES.items() %}
+    {% set r = latest.get(k) %}
+    <div class="card hover dis-card" style="--c:{{ d.color }}">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span class="ico">{{ d.icon }}</span>{% if r %}{{ badge(r['risk_level']) }}{% else %}<span class="badge gray">Not checked</span>{% endif %}</div>
+      <h3 style="margin-top:14px">{{ d.name }}</h3>
+      {% if r %}
+        {% set pct = [(r['probability']*100)|round(1), 99.9]|min %}
+        <div class="mini-gauge"><i style="width:{{ pct }}%;background:{{ {'Low':'#16a34a','Moderate':'#d97706','High':'#dc2626'}[r['risk_level']] }}"></i></div>
+        <div class="muted" style="font-size:.85rem">{{ pct }}% risk · {{ r['created_at']|dt }}</div>
+        <a href="{{ url_for('result', pid=r['id']) }}" class="btn btn-ghost btn-sm" style="margin-top:14px">View result</a>
+      {% else %}
+        <p class="muted" style="font-size:.9rem;margin:8px 0 14px">No assessment yet.</p>
+        <a href="{{ url_for('assess_manual', disease=k) }}" class="btn btn-ghost btn-sm">Check now</a>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="grid" style="grid-template-columns:1.5fr 1fr;gap:24px">
+    <div class="card">
+      <h3 class="t">Risk trend</h3><div class="sub">Probability of each assessment over time</div>
+      {% if timeline %}<div style="height:280px"><canvas id="trend"></canvas></div>
+      {% else %}<div class="empty"><div class="big">📈</div>Your trend will appear after your first assessment.</div>{% endif %}
+    </div>
+    <div class="card">
+      <h3 class="t">Recent activity</h3><div class="sub">Latest assessments</div>
+      {% for r in recent %}
+        <a href="{{ url_for('result', pid=r['id']) }}" style="display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid #eef2f7;color:inherit;text-decoration:none">
+          <span class="ico" style="background:#f1f5f9">{{ DISEASES[r['disease']].icon }}</span>
+          <div style="flex:1"><b>{{ DISEASES[r['disease']].name }}</b><div class="muted" style="font-size:.78rem">{{ r['created_at']|dt }}</div></div>
+          {{ badge(r['risk_level']) }}
+        </a>
+      {% else %}<div class="empty">No assessments yet.<br><a href="{{ url_for('assess') }}">Start your first one →</a></div>{% endfor %}
+    </div>
+  </div>
+</div></div>
+{% endblock %}
+{% block scripts %}
+{% if timeline %}
+<script>
+if (typeof Chart === 'undefined') { document.getElementById('trend').parentElement.innerHTML = '<div class="empty">Charts need internet once — see README (offline Chart.js).</div>'; } else {
+const T = {{ timeline|tojson }};
+const col = {diabetes:'#f43f5e', heart:'#f97316', kidney:'#8b5cf6'}, names = {diabetes:'Diabetes', heart:'Heart', kidney:'Kidney'};
+const labels = T.map((t,i)=> t.date + ' #' + (i+1));
+const ds = Object.keys(col).map(d => ({label:names[d], data:T.map(t=>t.disease===d?t.pct:null), borderColor:col[d], backgroundColor:col[d]+'33', spanGaps:true, tension:.35, pointRadius:5, pointHoverRadius:7, borderWidth:3}));
+new Chart(document.getElementById('trend'), {type:'line', data:{labels, datasets:ds},
+  options:{responsive:true, maintainAspectRatio:false, scales:{y:{min:0,max:100,ticks:{callback:v=>v+'%'},grid:{color:'#eef2f7'}}, x:{grid:{display:false}, ticks:{display:false}}},
+  plugins:{legend:{position:'bottom',labels:{usePointStyle:true}}}}});
+}
+</script>
+{% endif %}
+{% endblock %}

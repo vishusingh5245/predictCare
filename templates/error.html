@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Error {{ code }}{% endblock %}
+{% block content %}
+<div class="page"><div class="container"><div class="empty" style="padding:90px 0">
+  <div class="grad-text" style="font-family:'Plus Jakarta Sans';font-size:6rem;font-weight:800">{{ code }}</div>
+  <h2 style="margin:6px 0 10px">{{ msg }}</h2>
+  <a class="btn btn-primary" href="{{ url_for('index') }}" style="margin-top:14px">Back to home</a>
+</div></div></div>
+{% endblock %}

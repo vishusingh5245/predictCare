@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}About{% endblock %}
+{% block content %}
+<div class="page"><div class="container" style="max-width:1000px">
+  <div class="sec-head" style="margin-bottom:36px"><span class="eyebrow">About the project</span>
+    <h1 style="font-size:2.5rem;margin:10px 0">Predictive Healthcare &amp; <span class="grad-text">Disease Risk Prediction</span></h1>
+    <p>B.Tech CSE (7th Semester) major project — Samrat Ashok Rajkiya Engineering College, Mirzapur.</p></div>
+
+  <div class="grid g2" style="margin-bottom:24px">
+    <div class="card"><h3 class="t">The problem</h3><p class="muted">Chronic diseases like diabetes, heart and kidney disease progress silently. Lab reports are full of numbers that are hard for a non-medical person to interpret, and access to specialists is limited in semi-urban and rural regions like Mirzapur.</p></div>
+    <div class="card"><h3 class="t">Our solution</h3><p class="muted">A unified web portal that scans a medical report (OCR), cleans the data, runs trained ML classifiers and returns an explainable risk estimate with recommendations — all stored per patient in a database.</p></div>
+  </div>
+
+  <div class="card" style="margin-bottom:24px"><h3 class="t">System architecture</h3>
+    <div class="arch" style="margin:18px 0 6px">
+      <div class="node">👤 Patient<br><small class="muted">Register / Login</small></div><span class="arr">→</span>
+      <div class="node">📄 Report upload<br><small class="muted">PDF / Image</small></div><span class="arr">→</span>
+      <div class="node">🔍 OCR + Parser<br><small class="muted">Tesseract · pdfplumber</small></div><span class="arr">→</span>
+      <div class="node">🧪 Preprocessing<br><small class="muted">impute · scale</small></div><span class="arr">→</span>
+      <div class="node">🧠 ML models<br><small class="muted">scikit-learn</small></div><span class="arr">→</span>
+      <div class="node">📊 Risk report<br><small class="muted">+ PDF</small></div>
+    </div>
+    <div class="arch" style="margin-top:14px"><div class="node" style="background:#f0fdfa">🗄️ SQLite database — users · reports · predictions · login logs</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:24px"><h3 class="t">Technology stack</h3>
+    {% for t in ['Python 3','Flask','SQLite','scikit-learn','NumPy','Pandas','Tesseract OCR','pdfplumber','ReportLab','Chart.js','HTML5 / CSS3','JavaScript'] %}<span class="tag">{{ t }}</span>{% endfor %}</div>
+
+  <div class="card" style="margin-bottom:24px"><h3 class="t">Team — Group 15</h3>
+    <div class="grid g3" style="margin-top:14px">
+      {% for n, r in [('Prashant Singh','2312150100039'),('Vikas Gautam','2312150100061'),('Vishv Pratap Singh','2312150100069')] %}
+      <div style="display:flex;gap:12px;align-items:center"><span class="avatar" style="width:46px;height:46px">{{ n[:1] }}</span><div><b>{{ n }}</b><div class="muted" style="font-size:.82rem">Roll No. {{ r }}</div></div></div>{% endfor %}
+    </div>
+    <p class="muted" style="margin-top:18px;font-size:.9rem">Submitted to: Prof. Namrata Dhanda (HOD CSE) · Dr. Arun K Dubey · Dr. Amit K Tiwari</p></div>
+
+  <div class="disclaimer">⚠️ <div><b>Medical disclaimer.</b> This system is an academic prototype for preliminary risk awareness. It does not provide a medical diagnosis and must not replace professional medical advice.</div></div>
+</div></div>
+{% endblock %}

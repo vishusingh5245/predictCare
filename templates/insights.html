@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Model Insights{% endblock %}
+{% block head %}<script src="{{ chartjs_src }}"></script>{% endblock %}
+{% block content %}
+<div class="page"><div class="container">
+  <div class="page-head"><div><h1>Model insights</h1><p>Comparative evaluation of the classification models trained for each disease.</p></div></div>
+
+  <div class="card" style="margin-bottom:24px"><h3 class="t">ML pipeline</h3>
+    <div class="arch" style="margin-top:14px">
+      <div class="node">Dataset</div><span class="arr">→</span><div class="node">Cleaning<br><small class="muted">invalid zeros → NaN</small></div><span class="arr">→</span>
+      <div class="node">Median imputation</div><span class="arr">→</span><div class="node">Standard scaling</div><span class="arr">→</span>
+      <div class="node">LR · SVM · RF · GB</div><span class="arr">→</span><div class="node">5-fold CV + test</div><span class="arr">→</span><div class="node" style="background:var(--grad);color:#fff;border:0">Best model (.pkl)</div>
+    </div></div>
+
+  <div data-tabs>
+    <div class="tabs">
+      {% for k, d in DISEASES.items() %}<button data-tab="{{ k }}" class="{{ 'on' if loop.first }}">{{ d.icon }} {{ d.name }}</button>{% endfor %}
+    </div>
+    {% for k, d in DISEASES.items() %}
+    {% set m = metrics.get(k) %}
+    <div data-pane="{{ k }}" style="{{ '' if loop.first else 'display:none' }}">
+      {% if m %}
+      <div class="grid g4" style="margin-bottom:24px">
+        <div class="card stat"><div><b>{{ m.n_samples }}</b><span>Training records</span></div></div>
+        <div class="card stat"><div><b>{{ m.n_features }}</b><span>Features</span></div></div>
+        <div class="card stat"><div><b style="font-size:1.25rem">{{ m.best_model }}</b><span>Selected model</span></div></div>
+        <div class="card stat"><div><b>{{ (m.models[m.best_model].accuracy*100)|round(1) }}%</b><span>Test accuracy</span></div></div>
+      </div>
+      <div class="note">Dataset: <b>{{ d.dataset }}</b> — source: <b>{{ 'real dataset' if m.source=='real' else 'synthetic demo data (statistically modelled on the public dataset)' }}</b> · class balance {{ m.class_counts.positive }} positive / {{ m.class_counts.negative }} negative.</div>
+
+      <div class="card" style="margin-bottom:24px"><h3 class="t">Model comparison</h3><div class="sub">Hold-out test set ({{ m.test_size }} records) + 5-fold cross-validation</div>
+        <div class="table-wrap"><table class="tbl"><thead><tr><th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th><th>ROC-AUC</th><th>CV AUC (±sd)</th></tr></thead><tbody>
+        {% for name, s in m.models.items() %}
+          <tr style="{{ 'background:#f0fdfa' if name==m.best_model }}"><td><b>{{ name }}</b> {% if name==m.best_model %}<span class="badge Low">best</span>{% endif %}</td>
+            <td>{{ (s.accuracy*100)|round(1) }}%</td><td>{{ (s.precision*100)|round(1) }}%</td><td>{{ (s.recall*100)|round(1) }}%</td>
+            <td>{{ (s.f1*100)|round(1) }}%</td><td>{{ (s.roc_auc*100)|round(1) }}%</td><td>{{ (s.cv_auc_mean*100)|round(1) }}% ± {{ (s.cv_auc_std*100)|round(1) }}</td></tr>
+        {% endfor %}</tbody></table></div></div>
+
+      <div class="grid g2" style="margin-bottom:24px">
+        <div class="card"><h3 class="t">Metrics by model</h3><div style="height:300px"><canvas id="bar_{{ k }}"></canvas></div></div>
+        <div class="card"><h3 class="t">ROC curves</h3><div style="height:300px"><canvas id="roc_{{ k }}"></canvas></div></div>
+        <div class="card"><h3 class="t">Feature importance</h3><div class="sub">Permutation importance of the best model</div><div style="height:320px"><canvas id="imp_{{ k }}"></canvas></div></div>
+        <div class="card"><h3 class="t">Confusion matrix</h3><div class="sub">{{ m.best_model }} on the test set</div>
+          {% set cm = m.confusion_matrix %}
+          <div class="cm" style="margin:20px auto 0">
+            <div class="h"></div><div class="h">Pred. Negative</div><div class="h">Pred. Positive</div>
+            <div class="h">Actual<br>Neg.</div><div style="background:#dcfce7;color:#166534;font-size:1.5rem">{{ cm[0][0] }}</div><div style="background:#fee2e2;color:#991b1b;font-size:1.5rem">{{ cm[0][1] }}</div>
+            <div class="h">Actual<br>Pos.</div><div style="background:#fee2e2;color:#991b1b;font-size:1.5rem">{{ cm[1][0] }}</div><div style="background:#dcfce7;color:#166534;font-size:1.5rem">{{ cm[1][1] }}</div>
+          </div></div>
+      </div>
+      {% else %}<div class="card empty">Metrics not available. Run <code>python -m ml.train</code>.</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div></div>
+{% endblock %}
+{% block scripts %}
+<script>
+const M = {{ metrics|tojson }}, LAB = {{ labels|tojson }};
+const pal = ['#0ea5a4', '#6366f1', '#f59e0b', '#ef4444'];
+if (typeof Chart !== 'undefined') Object.keys(M).forEach(k => {
+  const m = M[k], names = Object.keys(m.models);
+  new Chart(document.getElementById('bar_' + k), {type: 'bar', data: {labels: ['Accuracy', 'Precision', 'Recall', 'F1', 'ROC-AUC'],
+    datasets: names.map((n, i) => ({label: n, backgroundColor: pal[i], borderRadius: 5, data: ['accuracy', 'precision', 'recall', 'f1', 'roc_auc'].map(x => +(m.models[n][x] * 100).toFixed(1))}))},
+    options: {responsive: true, maintainAspectRatio: false, scales: {y: {min: 50, max: 100, grid: {color: '#eef2f7'}}, x: {grid: {display: false}}}, plugins: {legend: {position: 'bottom', labels: {usePointStyle: true}}}}});
+  new Chart(document.getElementById('roc_' + k), {type: 'line', data: {datasets: names.map((n, i) => ({label: n, borderColor: pal[i], borderWidth: 2.5, pointRadius: 0, tension: .2,
+      data: m.models[n].roc.fpr.map((x, j) => ({x, y: m.models[n].roc.tpr[j]}))})).concat([{label: 'Chance', borderColor: '#94a3b8', borderDash: [5, 5], pointRadius: 0, borderWidth: 1.5, data: [{x: 0, y: 0}, {x: 1, y: 1}]}])},
+    options: {responsive: true, maintainAspectRatio: false, parsing: false, scales: {x: {type: 'linear', min: 0, max: 1, title: {display: true, text: 'False positive rate'}, grid: {color: '#eef2f7'}}, y: {min: 0, max: 1, title: {display: true, text: 'True positive rate'}, grid: {color: '#eef2f7'}}}, plugins: {legend: {position: 'bottom', labels: {usePointStyle: true}}}}});
+  const imp = m.feature_importance.slice(0, 8);
+  new Chart(document.getElementById('imp_' + k), {type: 'bar', data: {labels: imp.map(i => LAB[k][i.feature]), datasets: [{data: imp.map(i => +(i.importance * 100).toFixed(1)), backgroundColor: '#0ea5a4', borderRadius: 6}]},
+    options: {indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: {x: {grid: {color: '#eef2f7'}, ticks: {callback: v => v + '%'}}, y: {grid: {display: false}}}, plugins: {legend: {display: false}}}});
+});
+</script>
+{% endblock %}

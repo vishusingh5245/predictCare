@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{{ d.name }} result{% endblock %}
+{% block content %}
+{% set colr = {'Low':'#16a34a','Moderate':'#d97706','High':'#dc2626'}[res.level] %}
+<div class="page"><div class="container">
+  <div class="page-head no-print"><div><a href="{{ url_for('history') }}" class="muted">← History</a>
+    <h1>{{ d.icon }} {{ d.name }} risk report</h1><p>{{ row['created_at']|dt }} · Assessment #{{ row['id'] }} · {{ 'From scanned report' if row['source']=='report' else 'Manual entry' }}</p></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a class="btn btn-primary" href="{{ url_for('result_pdf', pid=row['id']) }}">⬇ Download PDF</a>
+      <button class="btn btn-ghost" onclick="window.print()">🖨 Print</button>
+      <a class="btn btn-ghost" href="{{ url_for('assess') }}">New assessment</a></div></div>
+
+  <div class="res-grid">
+    <div class="card gauge-card">
+      <div class="gauge" data-pct="{{ res.percent }}" data-color="{{ colr }}"></div>
+      <div class="risk-chip {{ res.level }}">{{ res.level }} Risk</div>
+      <p class="muted" style="font-size:.9rem">{% if res.probability >= 0.5 %}The model estimates an elevated likelihood of {{ d.name|lower }}.{% else %}The model estimates a lower likelihood of {{ d.name|lower }}.{% endif %}</p>
+      <div class="kv">
+        <span>Algorithm</span><b>{{ res.model }}</b>
+        <span>Parameters used</span><b>{{ res.given }} / {{ res.total }}</b>
+        <span>Data completeness</span><b>{{ res.completeness }}%</b>
+        <span>Missing values</span><b>Median-imputed</b>
+      </div>
+    </div>
+
+    <div class="stack">
+      {% if res.factors %}
+      <div class="card"><h3 class="t">What influenced this result</h3>
+        <div class="sub">Share of influence, measured by swapping each value with a typical (median) one. <span style="color:#ef4444">■</span> raises risk · <span style="color:#16a34a">■</span> lowers risk</div>
+        {% set mx = (res.factors|map(attribute='impact')|map('abs')|max) or 1 %}
+        {% for f in res.factors %}
+          <div class="factor"><span>{{ f.label }}</span>
+            <div class="bar"><i class="{{ 'pos' if f.impact>0 else 'neg' }}" style="width:0" data-w="{{ (f.impact|abs / mx * 100)|round }}%"></i></div>
+            <b style="color:{{ '#dc2626' if f.impact>0 else '#16a34a' }}">{{ '+' if f.impact>0 }}{{ f.impact }}%</b></div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="card"><h3 class="t">Your parameters</h3><div class="sub">Compared with standard reference ranges</div>
+        {% for key in d.features %}
+          {% set m = CATALOG[key] %}{% set v = inputs.get(key) %}
+          {% set fl = (res.flags|selectattr('key','equalto',key)|list|first) if res.flags|selectattr('key','equalto',key)|list else none %}
+          <div class="flag"><b>{{ m.label }}</b>
+            <span>{% if v is none %}<span class="muted">not provided</span>{% elif m.type=='select' %}{{ option_label(key, v) }}{% else %}{{ v|pretty }} <span class="muted">{{ m.unit }}</span>{% endif %}</span>
+            <span class="muted">{{ fl.ref if fl else '' }}</span>
+            <span>{% if fl %}<span class="st {{ fl.status }}">{{ fl.status }}</span>{% endif %}</span></div>
+        {% endfor %}
+      </div>
+
+      <div class="card"><h3 class="t">Recommendations</h3><div class="sub">General guidance — not a prescription</div>
+        <ul class="advice">{% for a in res.advice %}<li>{{ a }}</li>{% endfor %}</ul></div>
+
+      <div class="disclaimer">⚠️ <div><b>Not a diagnosis.</b> This is a preliminary ML-based estimate for awareness only. Please consult a qualified doctor for confirmation.</div></div>
+    </div>
+  </div>
+</div></div>
+{% endblock %}

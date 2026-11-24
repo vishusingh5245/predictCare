@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}AI Disease Risk Prediction{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="container">
+    <div>
+      <span class="pill"><i></i> AI · Machine Learning · Data Science</span>
+      <h1>Know your health risk <span>before it becomes a diagnosis.</span></h1>
+      <p class="lead">Upload a lab report or enter your parameters. Our ML models scan the values and estimate your risk of <b>Diabetes</b>, <b>Heart Disease</b> and <b>Kidney Disease</b> in seconds.</p>
+      <div class="cta">
+        {% if g.user %}<a class="btn btn-primary btn-lg" href="{{ url_for('assess') }}">Start new assessment →</a>
+        {% else %}<a class="btn btn-primary btn-lg" href="{{ url_for('register') }}">Create free account →</a>
+        <a class="btn btn-light btn-lg" href="{{ url_for('login') }}">Login</a>{% endif %}
+      </div>
+      <div class="hero-stats">
+        <div><b>3</b><span>Diseases covered</span></div>
+        <div><b>4</b><span>ML algorithms compared</span></div>
+        <div><b>OCR</b><span>Medical report scanning</span></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="glass hv-main">
+        <h4>Live risk analysis</h4>
+        <svg class="ecg" viewBox="0 0 400 90" preserveAspectRatio="none"><path d="M0 50 H70 L85 50 L98 12 L112 82 L126 36 L136 50 H210 L225 50 L238 18 L252 78 L264 40 L274 50 H400"/></svg>
+        <div class="mini-bars">
+          <div class="mb-row"><span>Diabetes</span><div class="mb-track"><i style="width:68%;background:linear-gradient(90deg,#fb923c,#ef4444)"></i></div><b>68%</b></div>
+          <div class="mb-row"><span>Heart</span><div class="mb-track"><i style="width:34%;background:linear-gradient(90deg,#fbbf24,#f59e0b)"></i></div><b>34%</b></div>
+          <div class="mb-row"><span>Kidney</span><div class="mb-track"><i style="width:9%;background:linear-gradient(90deg,#4ade80,#16a34a)"></i></div><b>9%</b></div>
+        </div>
+      </div>
+      <div class="glass hv-float hv-1"><span class="ico" style="background:rgba(94,234,212,.18)">📄</span><div><b>Report scanned</b><small>12 parameters extracted</small></div></div>
+      <div class="glass hv-float hv-2"><span class="ico" style="background:rgba(196,181,253,.2)">🧠</span><div><b>Best model selected</b><small>Cross-validated ROC-AUC</small></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="how">
+  <div class="container">
+    <div class="sec-head fade"><span class="eyebrow">How it works</span><h2>From a report to a risk score in four steps</h2>
+      <p>No medical jargon. Just upload, review and understand.</p></div>
+    <div class="steps">
+      <div class="step fade"><h4>Register &amp; Login</h4><p>Secure account with hashed passwords. Your records stay private to you.</p></div>
+      <div class="step fade"><h4>Scan your report</h4><p>Upload a PDF / photo of your lab report — OCR reads the values automatically.</p></div>
+      <div class="step fade"><h4>Review values</h4><p>Check and correct the extracted parameters before analysis.</p></div>
+      <div class="step fade"><h4>Get risk report</h4><p>Probability, key factors, recommendations and a downloadable PDF.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="diseases" style="background:#fff">
+  <div class="container">
+    <div class="sec-head fade"><span class="eyebrow">Unified prediction</span><h2>One portal. Three chronic diseases.</h2>
+      <p>Each disease has its own trained and cross-validated classifier.</p></div>
+    <div class="grid g3">
+      {% for k, d in DISEASES.items() %}
+      {% set s = stats.get(k, {}) %}
+      <div class="card hover dis-card fade" style="--c:{{ d.color }}">
+        <span class="ico">{{ d.icon }}</span>
+        <h3>{{ d.name }}</h3>
+        <p class="muted">{{ d.tagline }}</p>
+        <div class="metric-row">
+          <div><b>{{ metrics.get(k, {}).get('best_model', '—') }}</b>best model</div>
+          <div><b>{{ ((s.get('roc_auc', 0)) * 100)|round(1) }}%</b>ROC-AUC</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="container">
+    <div class="sec-head fade"><span class="eyebrow">Features</span><h2>Built like a real healthcare product</h2></div>
+    <div class="grid g3">
+      {% for ic, bg, t, p in [
+        ('🔍','#ccfbf1','Medical report OCR','Reads PDFs and images with Tesseract OCR and pulls out glucose, creatinine, BP, cholesterol and more.'),
+        ('🧪','#e0e7ff','Smart data cleaning','Invalid zero entries and missing values are handled with median imputation before prediction.'),
+        ('📊','#fee2e2','Explainable results','See which parameters pushed your risk up or down — not just a black-box number.'),
+        ('🗄️','#fef3c7','Persistent records','Every report and assessment is stored in a database so you can track your history over time.'),
+        ('📄','#dbeafe','PDF health summary','Download a clean, printable risk report for your doctor.'),
+        ('🔐','#f3e8ff','Secure by design','Hashed passwords, CSRF protection, per-user data isolation and validated uploads.')] %}
+      <div class="card hover feat fade"><span class="ico" style="background:{{ bg }}">{{ ic }}</span><h3>{{ t }}</h3><p>{{ p }}</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="block" style="padding-top:20px">
+  <div class="container"><div class="cta-band fade">
+    <h2>Early awareness saves lives.</h2><p>Takes less than a minute. Free for everyone.</p>
+    <a class="btn btn-lg" href="{{ url_for('assess' if g.user else 'register') }}">{{ 'Start assessment' if g.user else 'Get started now' }} →</a>
+  </div></div>
+</section>
+{% endblock %}

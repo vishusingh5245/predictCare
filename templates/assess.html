@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}New Assessment{% endblock %}
+{% block content %}
+<div class="page"><div class="container">
+  <div class="page-head"><div><h1>New assessment</h1><p>Scan a medical report or enter the values yourself.</p></div></div>
+  <div class="grid g2">
+    <div class="card method">
+      <span class="pill" style="background:#ccfbf1;color:#0f766e;border-color:#99e6df;width:max-content">⚡ Recommended</span>
+      <h3>📄 Scan a medical report</h3>
+      <p class="muted">Upload a lab report (PDF, PNG, JPG). We read the values with OCR and analyse all three diseases at once.</p>
+      {% if not ocr_ok %}<div class="note" style="margin:0">Tesseract OCR isn't installed on this server — text-based PDFs still work. See README to enable image scanning.</div>{% endif %}
+      <form method="post" action="{{ url_for('upload_report') }}" enctype="multipart/form-data" data-loader="Scanning your report…" style="display:contents">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <div class="drop" id="drop">
+          <input type="file" name="report" accept=".pdf,.png,.jpg,.jpeg,.bmp,.tiff,.webp" hidden>
+          <div class="big">☁️</div><b>Drag &amp; drop your report here</b><span class="muted">or click to browse · PDF / PNG / JPG · max 10 MB</span>
+          <div class="fname" id="fname"></div>
+        </div>
+        <button class="btn btn-primary btn-lg btn-block" id="scanBtn" disabled>Scan &amp; extract values</button>
+      </form>
+    </div>
+    <div class="card method">
+      <h3>✍️ Enter values manually</h3>
+      <p class="muted">Pick a disease and fill in the parameters from your report. Missing values are handled automatically.</p>
+      <div style="display:grid;gap:12px;margin-top:6px">
+        {% for k, d in DISEASES.items() %}
+        <a class="dis-pick" style="--c:{{ d.color }}" href="{{ url_for('assess_manual', disease=k) }}">
+          <span class="ico">{{ d.icon }}</span><div style="flex:1"><b>{{ d.name }}</b><small>{{ d.tagline }}</small></div><span>→</span>
+        </a>
+        {% endfor %}
+      </div>
+      <p class="muted" style="font-size:.84rem;margin-top:auto">Tip: try the demo reports in the <code>sample_reports/</code> folder of the project.</p>
+    </div>
+  </div>
+</div></div>
+{% endblock %}

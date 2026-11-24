@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}Report results{% endblock %}
+{% block content %}
+<div class="page"><div class="container">
+  <div class="page-head"><div><a href="{{ url_for('review_report', rid=rep['id']) }}" class="muted">← Edit values</a>
+    <h1>Your risk summary</h1><p>Based on <b>{{ rep['original_name'] }}</b> · scanned {{ rep['uploaded_at']|dt }}</p></div>
+    <a class="btn btn-ghost" href="{{ url_for('assess') }}">Scan another</a></div>
+
+  <div class="cmp">
+    {% for r, res in items %}
+      {% set d = DISEASES[r['disease']] %}
+      {% set colr = {'Low':'#16a34a','Moderate':'#d97706','High':'#dc2626'}[res.level] %}
+      <div class="card hover dis-card" style="--c:{{ d.color }}">
+        <div style="display:flex;justify-content:space-between;align-items:center"><span class="ico">{{ d.icon }}</span>{{ badge(res.level) }}</div>
+        <h3 style="margin-top:14px">{{ d.name }}</h3>
+        <div style="font-family:'Plus Jakarta Sans';font-weight:800;font-size:2.6rem;color:{{ colr }};line-height:1.1;margin-top:6px">{{ res.percent }}%</div>
+        <div class="mini-gauge"><i style="width:{{ res.percent }}%;background:{{ colr }}"></i></div>
+        <div class="muted" style="font-size:.82rem">Data completeness {{ res.completeness }}% · {{ res.model }}</div>
+        {% if res.factors %}<p style="font-size:.88rem;margin-top:12px"><b>Top factor:</b> {{ res.factors[0].label }}</p>{% endif %}
+        <a href="{{ url_for('result', pid=r['id']) }}" class="btn btn-primary btn-sm" style="margin-top:14px">Detailed report →</a>
+      </div>
+    {% endfor %}
+  </div>
+  <div class="disclaimer" style="margin-top:26px">⚠️ <div><b>Not a diagnosis.</b> These are statistical estimates from a student-built ML prototype. Always consult a qualified doctor for medical decisions.</div></div>
+</div></div>
+{% endblock %}

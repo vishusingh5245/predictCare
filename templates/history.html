@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}History{% endblock %}
+{% block content %}
+<div class="page"><div class="container">
+  <div class="page-head"><div><h1>Assessment history</h1><p>All your saved predictions, stored securely in the database.</p></div>
+    <a class="btn btn-primary" href="{{ url_for('assess') }}">＋ New assessment</a></div>
+  <div class="tabs" style="margin-bottom:20px">
+    <button class="{{ 'on' if not dis }}" onclick="location='{{ url_for('history') }}'">All</button>
+    {% for k, d in DISEASES.items() %}<button class="{{ 'on' if dis==k }}" onclick="location='{{ url_for('history', disease=k) }}'">{{ d.icon }} {{ d.name }}</button>{% endfor %}
+  </div>
+  <div class="card" style="padding:8px 8px">
+    {% if rows %}
+    <div class="table-wrap"><table class="tbl">
+      <thead><tr><th>#</th><th>Disease</th><th>Risk</th><th>Probability</th><th>Model</th><th>Source</th><th>Date</th><th></th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+        <tr><td class="muted">{{ r['id'] }}</td>
+          <td><b>{{ DISEASES[r['disease']].icon }} {{ DISEASES[r['disease']].name }}</b></td>
+          <td>{{ badge(r['risk_level']) }}</td><td><b>{{ [(r['probability']*100)|round(1), 99.9]|min }}%</b></td>
+          <td class="muted">{{ r['model_name'] }}</td><td><span class="badge gray">{{ r['source'] }}</span></td>
+          <td class="muted">{{ r['created_at']|dt }}</td>
+          <td style="white-space:nowrap;text-align:right">
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('result', pid=r['id']) }}">View</a>
+            <form method="post" action="{{ url_for('delete_prediction', pid=r['id']) }}" style="display:inline" onsubmit="return confirm('Delete this assessment?')">
+              <input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button class="btn btn-danger btn-sm">Delete</button></form></td></tr>
+      {% endfor %}
+      </tbody></table></div>
+    {% else %}<div class="empty"><div class="big">🗂️</div>No assessments yet.<br><a href="{{ url_for('assess') }}">Run your first assessment →</a></div>{% endif %}
+  </div>
+</div></div>
+{% endblock %}

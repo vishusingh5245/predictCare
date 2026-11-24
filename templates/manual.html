@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}{{ DISEASES[disease].name }} assessment{% endblock %}
+{% block content %}
+{% set d = DISEASES[disease] %}
+<div class="page"><div class="container" style="max-width:980px">
+  <div class="page-head"><div><a href="{{ url_for('assess') }}" class="muted">← Back</a>
+    <h1>{{ d.icon }} {{ d.name }} risk assessment</h1><p>{{ d.tagline }}. Fields marked * are required; leave unknown values blank.</p></div></div>
+  <form method="post" class="card" data-loader="Running ML model…">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    {% for gname, items in groups %}
+      <div class="form-group"><h3>{{ gname }}</h3>
+        <div class="fgrid">
+          {% for key, m in items %}
+            {{ field(key, form.get(key) if form else prefill.get(key), False, key in d.required) }}
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:10px">
+      <a class="btn btn-ghost" href="{{ url_for('assess') }}">Cancel</a>
+      <button class="btn btn-primary btn-lg">Predict risk →</button>
+    </div>
+  </form>
+</div></div>
+{% endblock %}

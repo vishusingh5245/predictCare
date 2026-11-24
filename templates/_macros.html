@@ -1,0 +1,19 @@
+{# One form field generated from the CATALOG. value: preset; found: highlight when auto-filled by OCR #}
+{% macro field(key, value=None, found=False, required=False) %}
+{% set m = CATALOG[key] %}
+<div class="field">
+  <label for="f_{{ key }}">{{ m.label }}{% if m.unit %} <span class="unit">({{ m.unit }})</span>{% endif %}{% if required %} <em>*</em>{% endif %}</label>
+  {% if m.type == 'select' %}
+    <select class="input {{ 'found' if found }}" id="f_{{ key }}" name="{{ key }}">
+      <option value="">— select —</option>
+      {% for v, l in m.options %}<option value="{{ v }}" {{ 'selected' if value is not none and value|string|replace('.0','') == v|string }}>{{ l }}</option>{% endfor %}
+    </select>
+  {% else %}
+    <input class="input {{ 'found' if found }}" type="number" id="f_{{ key }}" name="{{ key }}" step="{{ m.step }}" min="{{ m.min }}" max="{{ m.max }}"
+           value="{{ ('%g'|format(value|float)) if value is not none and value != '' else '' }}" placeholder="{{ m.min }} – {{ m.max }}">
+  {% endif %}
+  {% if m.help %}<div class="help">{{ m.help }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro badge(level) %}<span class="badge {{ level }}">● {{ level }} risk</span>{% endmacro %}
